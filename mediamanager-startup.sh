@@ -28,55 +28,66 @@ display_cool_text() {
     fi
   done <<< "$ascii_art"
 
+  # Pre-compute color gradient for the entire width
+  local -a color_codes
+  local seg1=$((max_width / 2))
+
+  for (( i=0; i<max_width; i++ )); do
+    local r=0
+    local g=0
+    local b=0
+
+    if (( i < seg1 )); then
+      # Blue to Orange gradient (first half)
+      local ratio=$((i * 1000 / seg1))
+      r=$(((r_blue * (1000 - ratio) + r_orange * ratio) / 1000))
+      g=$(((g_blue * (1000 - ratio) + g_orange * ratio) / 1000))
+      b=$(((b_blue * (1000 - ratio) + b_orange * ratio) / 1000))
+    else
+      # Orange to Red gradient (second half)
+      local segment_pos=$((i - seg1))
+      local segment_length=$((max_width - seg1))
+      [[ $segment_length -eq 0 ]] && segment_length=1
+      local ratio=$((segment_pos * 1000 / segment_length))
+      r=$(((r_orange * (1000 - ratio) + r_red * ratio) / 1000))
+      g=$(((g_orange * (1000 - ratio) + g_red * ratio) / 1000))
+      b=$(((b_orange * (1000 - ratio) + b_red * ratio) / 1000))
+    fi
+
+    [[ $r -lt 0 ]] && r=0
+    [[ $r -gt 255 ]] && r=255
+    [[ $g -lt 0 ]] && g=0
+    [[ $g -gt 255 ]] && g=255
+    [[ $b -lt 0 ]] && b=0
+    [[ $b -gt 255 ]] && b=255
+
+    color_codes[$i]="\033[38;2;${r};${g};${b}m"
+  done
+
+  local output=""
+  local reset="\033[0m"
+
   while IFS= read -r line; do
     local length=${#line}
 
     if [[ $length -eq 0 ]]; then
-      echo ""
+      output+=$'\n'
       continue
     fi
-
-    local seg1=$((max_width / 2))
 
     for (( i=0; i<length; i++ )); do
       local char="${line:$i:1}"
 
-      local r=0
-      local g=0
-      local b=0
-
-      if (( i < seg1 )); then
-        local percentage=$(echo "scale=2; $i / $seg1" | bc)
-        r=$(echo "scale=0; $r_blue + ($r_orange - $r_blue) * $percentage" | bc | cut -d. -f1)
-        g=$(echo "scale=0; $g_blue + ($g_orange - $g_blue) * $percentage" | bc | cut -d. -f1)
-        b=$(echo "scale=0; $b_blue + ($b_orange - $b_blue) * $percentage" | bc | cut -d. -f1)
-      else
-        local segment_pos=$(( i - seg1 ))
-        local segment_length=$(( max_width - seg1 ))
-        if [[ $segment_length -eq 0 ]]; then
-          segment_length=1
-        fi
-        local percentage=$(echo "scale=2; $segment_pos / $segment_length" | bc)
-        r=$(echo "scale=0; $r_orange + ($r_red - $r_orange) * $percentage" | bc | cut -d. -f1)
-        g=$(echo "scale=0; $g_orange + ($g_red - $g_orange) * $percentage" | bc | cut -d. -f1)
-        b=$(echo "scale=0; $b_orange + ($b_red - $b_orange) * $percentage" | bc | cut -d. -f1)
-      fi
-
-      [[ $r -lt 0 ]] && r=0
-      [[ $r -gt 255 ]] && r=255
-      [[ $g -lt 0 ]] && g=0
-      [[ $g -gt 255 ]] && g=255
-      [[ $b -lt 0 ]] && b=0
-      [[ $b -gt 255 ]] && b=255
-
       if [[ "$char" == " " ]]; then
-        printf " "
+        output+=" "
       else
-        printf "\033[38;2;%d;%d;%dm%s\033[0m" $r $g $b "$char"
+        output+="${color_codes[$i]}${char}${reset}"
       fi
     done
-    printf "\n"
+    output+=$'\n'
   done <<< "$ascii_art"
+
+  echo -e "$output"
 }
 ASCII_ART='
 
