@@ -1,8 +1,8 @@
+name: mediamanager-dev
 services:
   db:
     image: postgres:17
     restart: unless-stopped
-    container_name: postgres
     volumes:
       - ./res/postgres:/var/lib/postgresql/data
     environment:
@@ -19,12 +19,11 @@ services:
   mediamanager:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Containerfile
       target: app
       args:
         - VERSION=locally-built
         - BASE_PATH=
-    container_name: mediamanager
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -58,7 +57,6 @@ services:
       - mediamanager
   docs:
     image: squidfunk/mkdocs-material:9
-    container_name: mediamanager-docs
     volumes:
       - .:/docs
     ports:
@@ -70,21 +68,19 @@ services:
 # Additional services can be uncommented and configured as needed
 # ----------------------------
 
-  prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
-    volumes:
-      - ./res/prowlarr:/config
-    restart: unless-stopped
-    ports:
-      - "9696:9696"
+  # prowlarr:
+  #   image: lscr.io/linuxserver/prowlarr:latest
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Etc/UTC
+  #   volumes:
+  #     - ./res/prowlarr:/config
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9696:9696"
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
-    container_name: qbittorrent
     environment:
       - TZ=Etc/UTC
       - WEBUI_PORT=8080
@@ -139,9 +135,13 @@ services:
 #    ports:
 #      - 8081:8080
 #    restart: unless-stopped
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    environment:
+      - LOG_LEVEL=info
+    restart: unless-stopped
   jackett:
     image: lscr.io/linuxserver/jackett:latest
-    container_name: jackett
     environment:
       - PUID=1000
       - PGID=1000
