@@ -14,7 +14,7 @@ FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim AS base
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates bash libtorrent21 \
-    gcc bc locales media-types mailcap curl gzip unzip tar 7zip bzip2 unar gosu && \
+    gcc bc locales media-types mailcap curl gzip unzip tar 7zip bzip2 unar && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -26,11 +26,11 @@ ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 FROM base AS app
 WORKDIR /app
 
-ENV UV_CACHE_DIR=/home/mediamanager/.cache/uv \
+ENV UV_CACHE_DIR=~/.cache/uv \
     UV_LINK_MODE=copy
 
 COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/home/mediamanager/.cache/uv \
+RUN --mount=type=cache,target=~/.cache/uv \
     uv sync --locked
 
 ARG VERSION

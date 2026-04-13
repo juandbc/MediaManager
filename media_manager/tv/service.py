@@ -195,6 +195,21 @@ class TvService:
 
         return True
 
+    def get_season_number_from_query_string(self, query_str: str) -> int | None:
+        season = None
+        # Matches for S01 / S1
+        matches = re.search(r"\bs(\d{1,2})\b", query_str, re.IGNORECASE)
+        if matches and len(matches.groups()) > 0:
+            log.debug(f"Found {len(matches.groups())} matches for query: {matches.groups()}")
+            season = int(matches.group(1))
+        # Matches for Season 1 / Season 01
+        matches = re.search(r"\bseason\s*(\d{1,2})\b", query_str, re.IGNORECASE)
+        if matches and len(matches.groups()) > 0:
+            log.debug(f"Found {len(matches.groups())} matches for query: {matches.groups()}")
+            season = int(matches.group(1))
+
+        return season
+
     def get_all_available_torrents_for_a_season(
         self,
         season_number: int,
@@ -213,6 +228,7 @@ class TvService:
         show = self.tv_repository.get_show_by_id(show_id=show_id)
 
         if search_query_override:
+            season_number = self.get_season_number_from_query_string(search_query_override)
             torrents = self.indexer_service.search(
                 query=search_query_override, is_tv=True
             )
@@ -221,10 +237,13 @@ class TvService:
                 show=show, season_number=season_number
             )
 
-        results = [torrent for torrent in torrents if season_number in torrent.season]
+        if season_number:
+            log.debug(f"{len(torrents)} torrents passed with search query override: {search_query_override}")
+            torrents = [torrent for torrent in torrents if season_number in torrent.season]
+            log.debug(f"{len(torrents)} results passed after filtering for season number: {season_number}")
 
         return evaluate_indexer_query_results(
-            is_tv=True, query_results=results, media=show
+            is_tv=True, query_results=torrents, media=show
         )
 
     def get_all_shows(self) -> list[Show]:
@@ -783,14 +802,13 @@ class TvService:
         )
 
         imported_episodes_by_season: dict[int, list[int]] = {}
+        show_path = self.get_root_show_directory(show=show)
 
         for episode_file in episode_files:
             season = self.get_season_by_episode(episode_id=episode_file.episode_id)
             episode = self.get_episode(episode_file.episode_id)
 
-            season_path = self.get_root_season_directory(
-                show=show, season_number=season.number
-            )
+            season_path = show_path / Path(f"Season {season.number}")
             if not season_path.exists():
                 try:
                     season_path.mkdir(parents=True)

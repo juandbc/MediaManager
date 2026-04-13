@@ -1,6 +1,6 @@
 import logging
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
 from media_manager.indexer.schemas import IndexerQueryResult
@@ -21,12 +21,10 @@ class TorznabMixin:
                 flags = []
                 seeders = 0
                 age = 0
-                indexer_name = "unknown"
+                indexer_name = item.findtext("jackettindexer", "unknown")
 
-                if item.find("jackettindexer") is not None:
-                    indexer_name = item.find("jackettindexer").text
-                if item.find("prowlarrindexer") is not None:
-                    indexer_name = item.find("prowlarrindexer").text
+                if indexer_name == "unknown":
+                    indexer_name = item.findtext("prowlarrindexer", "unknown")
 
                 is_usenet = (
                     item.find("enclosure").attrib["type"] != "application/x-bittorrent"
@@ -61,7 +59,7 @@ class TorznabMixin:
                             if upload_volume_factor == 2:
                                 flags.append("doubleupload")
 
-                title = item.find("title").text
+                title = item.findtext("title","unknown")
                 size_str = item.find("size")
                 if size_str is None or size_str.text is None:
                     log.warning(f"Torznab item {title} has no size, skipping.")
@@ -72,9 +70,10 @@ class TorznabMixin:
                     log.warning(f"Torznab item {title} has invalid size, skipping.")
                     continue
 
+                url = (item.find("enclosure") and item.find("enclosure").attrib["url"]) or ""
                 result = IndexerQueryResult(
                     title=title or "unknown",
-                    download_url=str(item.find("enclosure").attrib["url"]),
+                    download_url=url,
                     seeders=seeders,
                     flags=flags,
                     size=size,
