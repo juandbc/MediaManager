@@ -6,6 +6,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from dataclasses import dataclass
 
 import requests
+from requests.adapters import HTTPAdapter
 
 from media_manager.config import MediaManagerConfig
 from media_manager.indexer.indexers.generic import GenericIndexer
@@ -54,7 +55,11 @@ class Jackett(GenericIndexer, TorznabMixin):
 
     def __search_jackett(self, params: dict) -> list[IndexerQueryResult]:
         futures = []
+        num_indexers = len(self.indexers)
+        adapter = HTTPAdapter(pool_connections=num_indexers, pool_maxsize=30)
         with ThreadPoolExecutor() as executor, requests.Session() as session:
+            session.mount("http://", adapter)
+            session.mount("https://", adapter)
             for indexer in self.indexers:
                 future = executor.submit(
                     self.get_torrents_by_indexer, indexer, params, session

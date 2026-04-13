@@ -115,6 +115,7 @@
 				id="query-override"
 				type="text"
 				placeholder={`e.g. ${getFullyQualifiedMediaName(show)} S01 1080p BluRay`}
+				onkeydown={(e) => { if (e.key === 'Enter' && !isLoading) search(); }}
 			/>
 			<Button disabled={isLoading} class="w-fit" onclick={search}>Search</Button>
 		</div>

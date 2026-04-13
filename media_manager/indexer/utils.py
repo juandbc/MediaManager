@@ -98,7 +98,7 @@ def evaluate_indexer_query_results(
             or ("ALL_MOVIES" in ruleset.libraries and not is_tv)
         ):
             log.debug(
-                f"Applying scoring ruleset {ruleset.name} for {media.name} ({media.year}) to {len(query_results)} results."
+                f"Applying scoring ruleset {ruleset.name} for {media.name} ({media.year}) to {len(query_results)} results from {query_results[0].indexer}."
             )
             for result in query_results:
                 log.debug(
