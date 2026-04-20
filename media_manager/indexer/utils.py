@@ -91,18 +91,15 @@ def evaluate_indexer_query_results(
     scoring_rulesets: list[ScoringRuleSet] = (
         MediaManagerConfig().indexers.scoring_rule_sets
     )
-    for ruleset in scoring_rulesets:
-        if (
-            (media.library in ruleset.libraries)
-            or ("ALL_TV" in ruleset.libraries and is_tv)
-            or ("ALL_MOVIES" in ruleset.libraries and not is_tv)
-        ):
-            log.debug(
-                f"Applying scoring ruleset {ruleset.name} for {media.name} ({media.year}) to {len(query_results)} results from {query_results[0].indexer}."
-            )
-            for result in query_results:
+    for result in query_results:
+        for ruleset in scoring_rulesets:
+            if (
+                (media.library in ruleset.libraries)
+                or ("ALL_TV" in ruleset.libraries and is_tv)
+                or ("ALL_MOVIES" in ruleset.libraries and not is_tv)
+            ):
                 log.debug(
-                    f"Applying scoring ruleset {ruleset.name} for IndexerQueryResult {result.title} for {media.name} ({media.year})"
+                    f"Applying scoring ruleset {ruleset.name} for IndexerQueryResult {result.title} for {media.name} ({media.year}) from {result.indexer}."
                 )
                 result, passed = evaluate_indexer_query_result(
                     query_result=result, ruleset=ruleset
