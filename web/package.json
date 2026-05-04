@@ -73,6 +73,6 @@
 		"animejs": "^4.2.2",
 		"lucide-svelte": "^0.574.0",
 		"openapi-fetch": "^0.14.0",
-		"uuid": "^11.1.0"
+		"uuid": "^14.0.0"
 	}
 }
