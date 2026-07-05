@@ -200,12 +200,16 @@ class TvService:
         # Matches for S01 / S1
         matches = re.search(r"\bs(\d{1,2})\b", query_str, re.IGNORECASE)
         if matches and len(matches.groups()) > 0:
-            log.debug(f"Found {len(matches.groups())} matches for query: {matches.groups()}")
+            log.debug(
+                f"Found {len(matches.groups())} matches for query: {matches.groups()}"
+            )
             season = int(matches.group(1))
         # Matches for Season 1 / Season 01
         matches = re.search(r"\bseason\s*(\d{1,2})\b", query_str, re.IGNORECASE)
         if matches and len(matches.groups()) > 0:
-            log.debug(f"Found {len(matches.groups())} matches for query: {matches.groups()}")
+            log.debug(
+                f"Found {len(matches.groups())} matches for query: {matches.groups()}"
+            )
             season = int(matches.group(1))
 
         return season
@@ -228,7 +232,9 @@ class TvService:
         show = self.tv_repository.get_show_by_id(show_id=show_id)
 
         if search_query_override:
-            season_number = self.get_season_number_from_query_string(search_query_override)
+            season_number = self.get_season_number_from_query_string(
+                search_query_override
+            )
             torrents = self.indexer_service.search(
                 query=search_query_override, is_tv=True
             )
@@ -238,9 +244,40 @@ class TvService:
             )
 
         if season_number:
-            log.debug(f"{len(torrents)} torrents passed with search query override: {search_query_override}")
-            torrents = [torrent for torrent in torrents if season_number in torrent.season]
-            log.debug(f"{len(torrents)} results passed after filtering for season number: {season_number}")
+            log.debug(
+                f"{len(torrents)} torrents found with search query override: {search_query_override}"
+            )
+            torrents = [
+                torrent for torrent in torrents if season_number in torrent.season
+            ]
+            log.debug(
+                f"{len(torrents)} results passed for season number: {season_number}"
+            )
+
+        return evaluate_indexer_query_results(
+            is_tv=True, query_results=torrents, media=show
+        )
+
+    def get_all_available_torrents_for_an_episode(
+        self,
+        show_id: ShowId,
+        season_number: int,
+        episode_number: int,
+    ) -> list[IndexerQueryResult]:
+        """
+        Get all available torrents for a given episode.
+
+        :param show_id: The ID of the show.
+        :param season_number: The number of the season.
+        :param episode_number: THe number of the episode.
+        :return: A list of indexer query results.
+        """
+
+        show = self.tv_repository.get_show_by_id(show_id=show_id)
+        search_query = (
+            f"{show.name} {show.year} S{season_number:02d}E{episode_number:02d}"
+        )
+        torrents = self.indexer_service.search(query=search_query, is_tv=True)
 
         return evaluate_indexer_query_results(
             is_tv=True, query_results=torrents, media=show

@@ -89,8 +89,8 @@ def get_files_for_import(
     Returns a tuple containing: seperated video files, subtitle files, and all files found in the torrent directory.
     """
     if torrent:
-        log.info(f"Importing torrent {torrent}")
         search_directory = get_torrent_filepath(torrent=torrent)
+        log.info(f"Importing torrent {torrent} from directory {search_directory}")
     elif directory:
         log.info(f"Importing files from directory {directory}")
         search_directory = directory

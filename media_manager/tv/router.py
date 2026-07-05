@@ -312,17 +312,25 @@ def get_torrents_for_a_season(
     tv_service: tv_service_dep,
     show_id: ShowId,
     season_number: int = 1,
+    episode_number: int | None = None,
     search_query_override: str | None = None,
 ) -> list[IndexerQueryResult]:
     """
     Search for torrents for a specific season of a show.
     Default season_number is 1 because it often returns multi-season torrents.
     """
-    return tv_service.get_all_available_torrents_for_a_season(
-        season_number=season_number,
-        show_id=show_id,
-        search_query_override=search_query_override,
-    )
+    if episode_number:
+        return tv_service.get_all_available_torrents_for_an_episode(
+            show_id=show_id,
+            season_number=season_number,
+            episode_number=episode_number,
+        )
+    else:
+        return tv_service.get_all_available_torrents_for_a_season(
+            season_number=season_number,
+            show_id=show_id,
+            search_query_override=search_query_override,
+        )
 
 
 @router.post(

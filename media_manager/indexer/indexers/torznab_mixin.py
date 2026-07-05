@@ -1,6 +1,6 @@
 import logging
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import datetime
 from email.utils import parsedate_to_datetime
 
 from media_manager.indexer.schemas import IndexerQueryResult
@@ -59,7 +59,7 @@ class TorznabMixin:
                             if upload_volume_factor == 2:
                                 flags.append("doubleupload")
 
-                title = item.findtext("title","unknown")
+                title = item.findtext("title", "unknown")
                 size_str = item.find("size")
                 if size_str is None or size_str.text is None:
                     log.warning(f"Torznab item {title} has no size, skipping.")
@@ -70,7 +70,9 @@ class TorznabMixin:
                     log.warning(f"Torznab item {title} has invalid size, skipping.")
                     continue
 
-                url = (item.find("enclosure") and item.find("enclosure").attrib["url"]) or ""
+                url = ""
+                if item.find("enclosure") is not None:
+                    url = item.find("enclosure").attrib["url"]
                 result = IndexerQueryResult(
                     title=title or "unknown",
                     download_url=url,
